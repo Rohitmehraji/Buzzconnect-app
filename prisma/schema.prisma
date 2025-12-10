@@ -1,0 +1,50 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  name     String
+  email    String   @unique
+  password String
+  role     Role     @default(BUYER)
+  products Product[]
+  enquiriesSent     Enquiry[] @relation("EnquiriesSent")
+  enquiriesReceived Enquiry[] @relation("EnquiriesReceived")
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+  category    String
+  location    String
+  createdAt   DateTime  @default(now())
+  seller      User      @relation(fields: [sellerId], references: [id])
+  sellerId    Int
+  enquiries   Enquiry[]
+}
+
+model Enquiry {
+  id          Int      @id @default(autoincrement())
+  message     String
+  createdAt   DateTime @default(now())
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   Int
+  buyer       User     @relation("EnquiriesSent", fields: [buyerId], references: [id])
+  buyerId     Int
+  seller      User     @relation("EnquiriesReceived", fields: [sellerId], references: [id])
+  sellerId    Int
+}
+
+enum Role {
+  BUYER
+  SELLER
+}
+
