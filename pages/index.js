@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Layout from '../components/Layout';
+import { useDebounce } from '../lib/hooks';
 
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500); // 500ms debounce delay
 
   const fetchProducts = async (q = '') => {
     const res = await fetch('/api/products?search=' + encodeURIComponent(q));
@@ -13,27 +15,21 @@ export default function Home() {
     setProducts(data.products || []);
   };
 
+  // Fetch products when the debounced search term changes
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    fetchProducts(debouncedSearch);
+  }, [debouncedSearch]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    fetchProducts(search);
-  };
 
   return (
     <Layout>
       <h1>Find Suppliers & Products</h1>
-      <form onSubmit={handleSearch} style={{ margin: '16px 0' }}>
+      <form style={{ margin: '16px 0' }}>
         <input
           placeholder="Search for product, category, location..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn-primary" type="submit">
-          Search
-        </button>
       </form>
 
       {products.length === 0 && <p>No products found.</p>}
