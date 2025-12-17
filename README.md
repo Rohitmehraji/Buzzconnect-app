@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BizzConnect
+
+BizzConnect is a B2B marketplace platform inspired by IndiaMART, connecting buyers with suppliers. This project is built with Next.js, Prisma, and PostgreSQL.
 
 ## Getting Started
 
-First, run the development server:
+To get a local copy up and running, follow these simple steps.
+
+### Prerequisites
+
+*   Node.js (v18 or later)
+*   npm
+*   PostgreSQL
+
+### Installation
+
+1.  **Clone the repo**
+    ```sh
+    git clone <repository-url>
+    ```
+2.  **Install NPM packages**
+    ```sh
+    npm install
+    ```
+3.  **Set up environment variables**
+
+    Create a `.env` file in the root of the project and add the following environment variable:
+
+    ```env
+    DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>"
+    ```
+
+    Replace the placeholders with your PostgreSQL connection details.
+
+4.  **Run database migrations**
+
+    Apply the database schema to your local database:
+
+    ```sh
+    npx prisma migrate dev
+    ```
+
+### Running the Development Server
+
+To start the development server, run the following command:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Seeding the Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To populate the database with some initial data, run the following command (seed script to be created):
+
+```bash
+npx prisma db seed
+```
+
+## Project Structure
+
+*   `pages/`: Next.js pages and API routes.
+*   `components/`: Reusable React components.
+*   `prisma/`: Prisma schema and migration files.
+*   `lib/`: Helper functions and utility code.
+*   `docs/`: Project documentation.
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+To learn more about the technologies used in this project, see the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs/)
