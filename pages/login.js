@@ -1,7 +1,7 @@
 // pages/login.js
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
-
 
 export default function LoginPage() {
   const [form, setForm] = useState({
@@ -9,6 +9,7 @@ export default function LoginPage() {
     password: '',
   });
   const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,22 +18,27 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
+
     const data = await res.json();
+
     if (!res.ok) {
       setError(data.error || 'Invalid credentials');
     } else {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        if (data.user.role === 'SELLER') {
-          window.location.href = '/seller/dashboard';
-        } else {
-          window.location.href = '/';
-        }
+      // The user data is now available in the response, but we'll
+      // rely on the http-only cookie for session management.
+      // We can use the user role from the response for redirection.
+      if (data.user.role === 'SUPPLIER') {
+        router.push('/supplier/dashboard');
+      } else if (data.user.role === 'ADMIN') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/');
       }
     }
   };
