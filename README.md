@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BizzConnect (formerly Buzzconnect-app)
+
+This repository contains the source code for BizzConnect, a B2B marketplace platform inspired by IndiaMART.
+
+## About
+
+BizzConnect is a feature-rich platform designed to connect buyers and suppliers, facilitating seamless trade and communication. It aims to replicate the core functionalities of a modern B2B marketplace, including supplier verification, product catalogs, a request for quotation (RFQ) system, and more.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+*   Node.js (v18 or later)
+*   npm
+*   PostgreSQL
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd buzzconnect-app
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up the environment:**
+    Create a `.env` file in the root of the project and add your PostgreSQL database connection string:
+    ```
+    DATABASE_URL="postgresql://user:password@localhost:5432/bizzconnect"
+    ```
+
+4.  **Run database migrations:**
+    ```bash
+    npx prisma migrate dev
+    ```
+
+### Running the Development Server
+
+To start the development server, run:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+*   `docs/`: Contains project documentation, including architecture, data model, and roadmap.
+*   `pages/`: Next.js pages and API routes.
+*   `prisma/`: Prisma schema and migration files.
+*   `components/`: Reusable React components.
+*   `lib/`: Shared libraries and helper functions.
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is proprietary and confidential.
