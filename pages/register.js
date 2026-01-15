@@ -65,7 +65,7 @@ export default function RegisterPage() {
           <label>Account Type</label>
           <select name="role" value={form.role} onChange={handleChange}>
             <option value="BUYER">Buyer</option>
-            <option value="SELLER">Seller</option>
+            <option value="SUPPLIER">Supplier</option>
           </select>
 
           <button type="submit" className="btn-primary mt-3">

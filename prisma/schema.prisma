@@ -1,5 +1,5 @@
 datasource db {
-  provider =  "postgresql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -8,43 +8,194 @@ generator client {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  role     Role     @default(BUYER)
-  products Product[]
-  enquiriesSent     Enquiry[] @relation("EnquiriesSent")
-  enquiriesReceived Enquiry[] @relation("EnquiriesReceived")
+  id                Int               @id @default(autoincrement())
+  email             String            @unique
+  name              String
+  password          String
+  role              Role              @default(BUYER)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  supplierProfile   SupplierProfile?
+  products          Product[]
+  rfqs              Rfq[]
+  leadsAsBuyer      Lead[]            @relation("BuyerLeads")
+  leadsAsSupplier   Lead[]            @relation("SupplierLeads")
+  messages          Message[]
+  reviews           Review[]
+  notifications     Notification[]
+  subscription      Subscription?
+}
+
+model SupplierProfile {
+  id                Int               @id @default(autoincrement())
+  userId            Int               @unique
+  user              User              @relation(fields: [userId], references: [id])
+  companyName       String
+  address           String
+  gstNumber         String?
+  panNumber         String?
+  contactNumber     String
+  serviceAreas      String[]
+  certifications    String[]
+  verification      VerificationStatus @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  parentId    Int?
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  subcategories Category[] @relation("SubCategories")
+  products    Product[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Product {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String
-  price       Float
-  category    String
-  location    String
-  createdAt   DateTime  @default(now())
-  seller      User      @relation(fields: [sellerId], references: [id])
-  sellerId    Int
-  enquiries   Enquiry[]
+  id           Int            @id @default(autoincrement())
+  title        String
+  description  String
+  images       String[]
+  price        Decimal?
+  priceOnRequest Boolean      @default(false)
+  moq          Int?
+  unit         String?
+  leadTime     String?
+  location     String
+  tags         String[]
+  status       ProductStatus  @default(DRAFT)
+  sellerId     Int
+  seller       User           @relation(fields: [sellerId], references: [id])
+  categoryId   Int
+  category     Category       @relation(fields: [categoryId], references: [id])
+  rfqs         Rfq[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
-model Enquiry {
+model Rfq {
   id          Int      @id @default(autoincrement())
-  message     String
-  createdAt   DateTime @default(now())
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   Int
-  buyer       User     @relation("EnquiriesSent", fields: [buyerId], references: [id])
   buyerId     Int
-  seller      User     @relation("EnquiriesReceived", fields: [sellerId], references: [id])
-  sellerId    Int
+  buyer       User     @relation(fields: [buyerId], references: [id])
+  productId   Int?
+  product     Product? @relation(fields: [productId], references: [id])
+  title       String
+  description String
+  quantity    Int
+  budget      Decimal?
+  location    String
+  timeline    String
+  status      RfqStatus @default(OPEN)
+  leads       Lead[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Lead {
+  id          Int        @id @default(autoincrement())
+  rfqId       Int
+  rfq         Rfq        @relation(fields: [rfqId], references: [id])
+  buyerId     Int
+  buyer       User       @relation("BuyerLeads", fields: [buyerId], references: [id])
+  supplierId  Int
+  supplier    User       @relation("SupplierLeads", fields: [supplierId], references: [id])
+  status      LeadStatus @default(OPEN)
+  messages    Message[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  leadId    Int
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  senderId  Int
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Plan {
+  id              Int            @id @default(autoincrement())
+  name            String         @unique
+  price           Decimal
+  productLimit    Int
+  leadLimit       Int
+  priorityListing Boolean        @default(false)
+  subscriptions   Subscription[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Subscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  planId    Int
+  plan      Plan     @relation(fields: [planId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  status    SubscriptionStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  reviewerId Int
+  reviewer   User     @relation(fields: [reviewerId], references: [id])
+  supplierId Int
+  rating     Int
+  comment    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 enum Role {
   BUYER
-  SELLER
+  SUPPLIER
+  ADMIN
 }
 
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum RfqStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  EXPIRED
+}
+
+enum LeadStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  NOT_INTERESTED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
