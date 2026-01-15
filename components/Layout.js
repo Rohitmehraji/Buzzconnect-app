@@ -4,34 +4,38 @@ import { useEffect, useState } from 'react';
 
 export default function Layout({ children }) {
   const [user, setUser] = useState(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('user');
-      if (stored) setUser(JSON.parse(stored));
+    setIsClient(true);
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      setUser(JSON.parse(stored));
     }
   }, []);
 
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user');
-      window.location.href = '/';
-    }
+    localStorage.removeItem('user');
+    window.location.href = '/';
   };
+
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <>
       <nav className="navbar">
         <div>
           <Link href="/">
-            <strong>BizConnect</strong> {/* your own brand name */}
+            <strong>BizzConnect</strong>
           </Link>
         </div>
         <div>
           <Link href="/">Home</Link>
           <Link href="/products">Products</Link>
-          {user?.role === 'SELLER' && (
-            <Link href="/sellers/dashboard">Seller Dashboard</Link>
+          {user?.role === 'SUPPLIER' && (
+            <Link href="/supplier/dashboard">Supplier Dashboard</Link>
           )}
           {!user && (
             <>
