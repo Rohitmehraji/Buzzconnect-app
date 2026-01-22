@@ -1,5 +1,8 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 datasource db {
-  provider =  "postgresql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -7,44 +10,234 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  role     Role     @default(BUYER)
-  products Product[]
-  enquiriesSent     Enquiry[] @relation("EnquiriesSent")
-  enquiriesReceived Enquiry[] @relation("EnquiriesReceived")
-}
-
-model Product {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String
-  price       Float
-  category    String
-  location    String
-  createdAt   DateTime  @default(now())
-  seller      User      @relation(fields: [sellerId], references: [id])
-  sellerId    Int
-  enquiries   Enquiry[]
-}
-
-model Enquiry {
-  id          Int      @id @default(autoincrement())
-  message     String
-  createdAt   DateTime @default(now())
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   Int
-  buyer       User     @relation("EnquiriesSent", fields: [buyerId], references: [id])
-  buyerId     Int
-  seller      User     @relation("EnquiriesReceived", fields: [sellerId], references: [id])
-  sellerId    Int
-}
+// ================================================= //
+// ENUMS
+// ================================================= //
 
 enum Role {
   BUYER
-  SELLER
+  SUPPLIER
+  ADMIN
 }
 
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum LeadStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  EXPIRED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+// ================================================= //
+// MODELS
+// ================================================= //
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  name            String
+  password        String
+  role            Role     @default(BUYER)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  supplierProfile SupplierProfile?
+  products        Product[]
+  rfqs            Rfq[]
+  leads           Lead[]
+  reviewsWritten  Review[]   @relation("ReviewsWritten")
+  reviewsReceived Review[]   @relation("ReviewsReceived")
+  messagesSent    LeadMessage[] @relation("MessagesSent")
+  messagesReceived LeadMessage[] @relation("MessagesReceived")
+  subscription    Subscription?
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model SupplierProfile {
+  id                 Int      @id @default(autoincrement())
+  companyName        String
+  address            String
+  gstNumber          String   @unique
+  panNumber          String   @unique
+  contactPhone       String
+  contactEmail       String
+  businessCategories String[]
+  serviceAreas       String[]
+  certifications     String[]
+  verificationStatus VerificationStatus @default(PENDING)
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId Int    @unique
+
+  @@map("supplier_profiles")
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  subcategories Subcategory[]
+
+  @@map("categories")
+}
+
+model Subcategory {
+  id         Int      @id @default(autoincrement())
+  name       String
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+
+  products   Product[]
+
+  @@map("subcategories")
+}
+
+model Product {
+  id               Int      @id @default(autoincrement())
+  title            String
+  description      String
+  images           String[]
+  price            Float?
+  priceOnRequest   Boolean  @default(false)
+  minOrderQuantity Int      @default(1)
+  unit             String   // e.g., "piece", "kg", "ton"
+  leadTime         String   // e.g., "7-10 days"
+  location         String
+  tags             String[]
+  status           ProductStatus @default(DRAFT)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  supplier   User   @relation(fields: [supplierId], references: [id])
+  supplierId Int
+
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])
+  subcategoryId Int
+
+  @@map("products")
+}
+
+model Rfq {
+  id          Int      @id @default(autoincrement())
+  description String
+  quantity    Int
+  budget      Float?
+  location    String
+  timeline    String
+  createdAt   DateTime @default(now())
+
+  buyer       User     @relation(fields: [buyerId], references: [id])
+  buyerId     Int
+
+  leads       Lead[]
+
+  @@map("rfqs")
+}
+
+model Lead {
+  id        Int      @id @default(autoincrement())
+  status    LeadStatus @default(OPEN)
+  createdAt DateTime @default(now())
+
+  rfq       Rfq    @relation(fields: [rfqId], references: [id])
+  rfqId     Int
+
+  supplier   User   @relation(fields: [supplierId], references: [id])
+  supplierId Int
+
+  messages  LeadMessage[]
+
+  @@map("leads")
+}
+
+model LeadMessage {
+  id         Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+
+  lead     Lead @relation(fields: [leadId], references: [id])
+  leadId   Int
+
+  sender     User @relation("MessagesSent", fields: [senderId], references: [id])
+  senderId   Int
+
+  receiver   User @relation("MessagesReceived", fields: [receiverId], references: [id])
+  receiverId Int
+
+  @@map("lead_messages")
+}
+
+model Plan {
+  id                Int      @id @default(autoincrement())
+  name              String   @unique
+  price             Float
+  productLimit      Int
+  leadLimit         Int
+  hasPriorityListing Boolean  @default(false)
+
+  subscriptions     Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id        Int      @id @default(autoincrement())
+  startDate DateTime
+  endDate   DateTime
+  status    SubscriptionStatus @default(ACTIVE)
+
+  user     User   @relation(fields: [userId], references: [id])
+  userId   Int    @unique
+
+  plan     Plan   @relation(fields: [planId], references: [id])
+  planId   Int
+
+  @@map("subscriptions")
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  rating     Int      // 1 to 5
+  comment    String?
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  author     User   @relation("ReviewsWritten", fields: [authorId], references: [id])
+  authorId   Int
+
+  supplier   User   @relation("ReviewsReceived", fields: [supplierId], references: [id])
+  supplierId Int
+
+  @@map("reviews")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  recipient   User   @relation(fields: [recipientId], references: [id])
+  recipientId Int
+
+  @@map("notifications")
+}
