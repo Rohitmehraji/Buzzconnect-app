@@ -7,44 +7,199 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// --- Core Models ---
+
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  role     Role     @default(BUYER)
-  products Product[]
-  enquiriesSent     Enquiry[] @relation("EnquiriesSent")
-  enquiriesReceived Enquiry[] @relation("EnquiriesReceived")
+  id                Int                @id @default(autoincrement())
+  name              String?
+  email             String             @unique
+  password          String
+  role              USER_ROLE          @default(BUYER)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  supplierProfile   SupplierProfile?
+  products          Product[]
+  rfqs              RFQ[]
+  sentLeads         Lead[]             @relation("SentLeads")
+  receivedLeads     Lead[]             @relation("ReceivedLeads")
+  sentMessages      LeadMessage[]
+  subscriptions     Subscription[]
+  reviews           Review[]
+  notifications     Notification[]
+}
+
+model SupplierProfile {
+  id                 Int        @id @default(autoincrement())
+  userId             Int        @unique
+  user               User       @relation(fields: [userId], references: [id])
+  companyName        String
+  companyAddress     String
+  gstNumber          String?
+  panNumber          String?
+  contactPerson      String
+  contactEmail       String
+  contactPhone       String
+  businessCategories String[]
+  serviceAreas       String[]
+  certifications     String[]
+  kycStatus          KYC_STATUS @default(PENDING)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+}
+
+// --- Product Catalog ---
+
+model Category {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  subcategories Subcategory[]
+  products      Product[]
+  rfqs          RFQ[]
+}
+
+model Subcategory {
+  id         Int      @id @default(autoincrement())
+  name       String
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  products   Product[]
+  rfqs       RFQ[]
 }
 
 model Product {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String
-  price       Float
-  category    String
-  location    String
-  createdAt   DateTime  @default(now())
-  seller      User      @relation(fields: [sellerId], references: [id])
-  sellerId    Int
-  enquiries   Enquiry[]
+  id            Int            @id @default(autoincrement())
+  title         String
+  description   String
+  images        String[]
+  price         Float?
+  moq           Int?
+  unit          String?
+  leadTime      String?
+  location      String
+  tags          String[]
+  status        PRODUCT_STATUS @default(DRAFT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sellerId      Int
+  seller        User           @relation(fields: [sellerId], references: [id])
+  categoryId    Int
+  category      Category       @relation(fields: [categoryId], references: [id])
+  subcategoryId Int
+  subcategory   Subcategory    @relation(fields: [subcategoryId], references: [id])
+  leads         Lead[]
+  reviews       Review[]
 }
 
-model Enquiry {
-  id          Int      @id @default(autoincrement())
-  message     String
-  createdAt   DateTime @default(now())
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   Int
-  buyer       User     @relation("EnquiriesSent", fields: [buyerId], references: [id])
-  buyerId     Int
-  seller      User     @relation("EnquiriesReceived", fields: [sellerId], references: [id])
-  sellerId    Int
+// --- RFQ and Lead System ---
+
+model RFQ {
+  id            Int         @id @default(autoincrement())
+  buyerId       Int
+  buyer         User        @relation(fields: [buyerId], references: [id])
+  categoryId    Int
+  category      Category    @relation(fields: [categoryId], references: [id])
+  subcategoryId Int
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id])
+  quantity      Int
+  budget        Float?
+  timeline      String?
+  location      String
+  details       String
+  createdAt     DateTime    @default(now())
+  leads         Lead[]
 }
 
-enum Role {
+model Lead {
+  id         Int           @id @default(autoincrement())
+  rfqId      Int
+  rfq        RFQ           @relation(fields: [rfqId], references: [id])
+  buyerId    Int
+  buyer      User          @relation("SentLeads", fields: [buyerId], references: [id])
+  supplierId Int
+  supplier   User          @relation("ReceivedLeads", fields: [supplierId], references: [id])
+  productId  Int?
+  product    Product?      @relation(fields: [productId], references: [id])
+  status     LEAD_STATUS   @default(OPEN)
+  createdAt  DateTime      @default(now())
+  messages   LeadMessage[]
+}
+
+model LeadMessage {
+  id        Int      @id @default(autoincrement())
+  leadId    Int
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  senderId  Int
+  sender    User     @relation(fields: [senderId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+}
+
+// --- Monetization, Reviews, and Notifications ---
+
+model Plan {
+  id             Int            @id @default(autoincrement())
+  name           String
+  price          Float
+  productLimit   Int
+  leadLimit      Int
+  features       String[]
+  subscriptions  Subscription[]
+}
+
+model Subscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  planId    Int
+  plan      Plan     @relation(fields: [planId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  buyerId   Int
+  buyer     User     @relation(fields: [buyerId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// --- Enums ---
+
+enum PRODUCT_STATUS {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum LEAD_STATUS {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  EXPIRED
+}
+
+enum USER_ROLE {
   BUYER
-  SELLER
+  SUPPLIER
+  ADMIN
 }
 
+enum KYC_STATUS {
+  PENDING
+  VERIFIED
+  REJECTED
+}
