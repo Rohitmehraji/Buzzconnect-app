@@ -1,5 +1,5 @@
 datasource db {
-  provider =  "postgresql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -8,43 +8,86 @@ generator client {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  role     Role     @default(BUYER)
-  products Product[]
-  enquiriesSent     Enquiry[] @relation("EnquiriesSent")
-  enquiriesReceived Enquiry[] @relation("EnquiriesReceived")
+  id              Int              @id @default(autoincrement())
+  name            String
+  email           String           @unique
+  password        String
+  role            Role             @default(BUYER)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  supplierProfile SupplierProfile?
+}
+
+model SupplierProfile {
+  id                 Int      @id @default(autoincrement())
+  user               User     @relation(fields: [userId], references: [id])
+  userId             Int      @unique
+  companyName        String
+  address            String
+  gstin              String   @unique
+  pan                String   @unique
+  contactNumber      String
+  serviceAreas       String[]
+  certifications     String[]
+  verificationStatus VerificationStatus @default(PENDING)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  products           Product[]
+}
+
+model Category {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  subcategories Subcategory[]
+  createdAt     DateTime      @default(now())
+}
+
+model Subcategory {
+  id         Int       @id @default(autoincrement())
+  name       String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  categoryId Int
+  products   Product[]
+  createdAt  DateTime  @default(now())
+
+  @@unique([name, categoryId])
 }
 
 model Product {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String
-  price       Float
-  category    String
-  location    String
-  createdAt   DateTime  @default(now())
-  seller      User      @relation(fields: [sellerId], references: [id])
-  sellerId    Int
-  enquiries   Enquiry[]
-}
-
-model Enquiry {
-  id          Int      @id @default(autoincrement())
-  message     String
-  createdAt   DateTime @default(now())
-  product     Product  @relation(fields: [productId], references: [id])
-  productId   Int
-  buyer       User     @relation("EnquiriesSent", fields: [buyerId], references: [id])
-  buyerId     Int
-  seller      User     @relation("EnquiriesReceived", fields: [sellerId], references: [id])
-  sellerId    Int
+  id             Int           @id @default(autoincrement())
+  title          String
+  description    String
+  images         String[]
+  price          Float?
+  priceOnRequest Boolean       @default(false)
+  moq            Int?
+  units          String?
+  leadTime       String?
+  location       String
+  tags           String[]
+  status         ProductStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  supplier       SupplierProfile @relation(fields: [supplierId], references: [id])
+  supplierId     Int
+  subcategory    Subcategory   @relation(fields: [subcategoryId], references: [id])
+  subcategoryId  Int
 }
 
 enum Role {
   BUYER
-  SELLER
+  SUPPLIER
+  ADMIN
 }
 
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
