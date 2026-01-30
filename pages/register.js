@@ -1,78 +1,128 @@
 // pages/register.js
 import { useState } from 'react';
-import Layout from '../components/Layout';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+// Note: The Layout component does not exist yet. This will be created later.
+// For now, we will use a simple functional layout.
 
-
-export default function RegisterPage() {
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'BUYER',
-  });
+export default function Register() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('BUYER'); // Default role
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || 'Something went wrong');
-    } else {
-      setSuccess('Registration successful! Please login.');
+
+    if (!name || !email || !password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, role }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Something went wrong');
+      }
+
+      setSuccess('Registration successful! Redirecting to login...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+
+    } catch (err) {
+      setError(err.message);
     }
   };
 
   return (
-    <Layout>
-      <div className="card form-card">
-        <h2>Create Account</h2>
-        {error && <p style={{ color: 'red', fontSize: 13 }}>{error}</p>}
-        {success && <p style={{ color: 'green', fontSize: 13 }}>{success}</p>}
-        <form onSubmit={handleSubmit}>
-          <label>Name</label>
-          <input name="name" value={form.name} onChange={handleChange} required />
+    <div style={{ maxWidth: '400px', margin: '40px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <h1>Create an Account</h1>
+      <form onSubmit={handleSubmit}>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {success && <p style={{ color: 'green' }}>{success}</p>}
 
-          <label>Email</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="name">Full Name</label>
           <input
-            name="email"
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            style={{ width: '100%', padding: '8px', marginTop: '4px' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="email">Email Address</label>
+          <input
             type="email"
-            value={form.email}
-            onChange={handleChange}
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
+            style={{ width: '100%', padding: '8px', marginTop: '4px' }}
           />
+        </div>
 
-          <label>Password</label>
+        <div style={{ marginBottom: '16px' }}>
+          <label htmlFor="password">Password</label>
           <input
-            name="password"
             type="password"
-            value={form.password}
-            onChange={handleChange}
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
+            style={{ width: '100%', padding: '8px', marginTop: '4px' }}
           />
+        </div>
 
-          <label>Account Type</label>
-          <select name="role" value={form.role} onChange={handleChange}>
-            <option value="BUYER">Buyer</option>
-            <option value="SELLER">Seller</option>
-          </select>
+        <div style={{ marginBottom: '16px' }}>
+          <label>Register as a:</label>
+          <div>
+            <label style={{ marginRight: '16px' }}>
+              <input
+                type="radio"
+                name="role"
+                value="BUYER"
+                checked={role === 'BUYER'}
+                onChange={(e) => setRole(e.target.value)}
+              /> Buyer
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="role"
+                value="SUPPLIER"
+                checked={role === 'SUPPLIER'}
+                onChange={(e) => setRole(e.target.value)}
+              /> Supplier
+            </label>
+          </div>
+        </div>
 
-          <button type="submit" className="btn-primary mt-3">
-            Register
-          </button>
-        </form>
-      </div>
-    </Layout>
+        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '4px' }}>
+          Register
+        </button>
+      </form>
+      <p style={{ marginTop: '16px', textAlign: 'center' }}>
+        Already have an account? <Link href="/login">Login</Link>
+      </p>
+    </div>
   );
 }

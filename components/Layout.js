@@ -1,61 +1,30 @@
 // components/Layout.js
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import React from 'react';
+import Head from 'next/head';
 
-export default function Layout({ children }) {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('user');
-      if (stored) setUser(JSON.parse(stored));
-    }
-  }, []);
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user');
-      window.location.href = '/';
-    }
-  };
-
+const Layout = ({ children, title = 'BizzConnect' }) => {
   return (
-    <>
-      <nav className="navbar">
-        <div>
-          <Link href="/">
-            <strong>BizConnect</strong> {/* your own brand name */}
-          </Link>
+    <div>
+      <Head>
+        <title>{title}</title>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+      </Head>
+      <header style={{ borderBottom: '1px solid #eee', padding: '16px 0' }}>
+        <div className="container">
+          <h1 style={{ margin: 0 }}>BizzConnect</h1>
         </div>
-        <div>
-          <Link href="/">Home</Link>
-          <Link href="/products">Products</Link>
-          {user?.role === 'SELLER' && (
-            <Link href="/sellers/dashboard">Seller Dashboard</Link>
-          )}
-          {!user && (
-            <>
-              <Link href="/login">Login</Link>
-              <Link href="/register">Register</Link>
-            </>
-          )}
-          {user && (
-            <>
-              <span style={{ marginLeft: 10, fontSize: 13 }}>
-                Hi, {user.name} ({user.role.toLowerCase()})
-              </span>
-              <button
-                className="btn-secondary"
-                style={{ marginLeft: 10 }}
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            </>
-          )}
+      </header>
+      <main>
+        <div className="container">{children}</div>
+      </main>
+      <footer style={{ borderTop: '1px solid #eee', padding: '16px 0', marginTop: '40px' }}>
+        <div className="container">
+          <p>&copy; {new Date().getFullYear()} BizzConnect. All rights reserved.</p>
         </div>
-      </nav>
-      <div className="container">{children}</div>
-    </>
+      </footer>
+    </div>
   );
-}
+};
+
+export default Layout;
