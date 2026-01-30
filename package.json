@@ -1,5 +1,5 @@
 {
-  "name": "indiamart-clone",
+  "name": "bizzconnect-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,18 +10,22 @@
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
-    "next": "16.0.8",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "next": "^16.1.6",
     "prisma": "^6.2.1",
     "react": "19.2.1",
     "react-dom": "19.2.1"
   },
   "devDependencies": {
-    "tailwindcss": "^4",
     "@types/node": "^20",
-    "@types/react": "^19"
+    "@types/react": "^19",
+    "tailwindcss": "^4",
+    "typescript": "5.9.3"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
   }
 }
-
